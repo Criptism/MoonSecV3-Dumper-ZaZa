@@ -29,6 +29,37 @@ local Window = Rayfield:CreateWindow({
 })
 local Tab = Window:CreateTab("Farming")
 local Section = Tab:CreateSection("Farming")
+local CWT = 0 -- Global variable
+local function getWeightCount(player)
+	local weightCount = 0
+
+	-- Check currently equipped tools (in Character)
+	if player.Character then
+		for _, item in ipairs(player.Character:GetChildren()) do
+			if item.Name == "Double Weight" then
+				weightCount += 1
+			end
+		end
+	end
+	
+	if player then
+		for_, item in ipairs(player.Backpack:GetChildren()) do
+			if item.Name == "Double Weight" then
+				weightCount += 1
+			end
+		end
+	end
+	return weightCount
+end
+
+local Button = Tab:CreateButton({
+  Name = "Update CWT",
+  CurrentValue = false,
+  Callback = function()
+    CWT = weightCount * 0.0006
+  end,
+})
+-- EQUIP TOGGLE
 local Toggle = Tab:CreateToggle({
 	Name = "Equip Weight",
 	CurrentValue = false,
@@ -37,43 +68,46 @@ local Toggle = Tab:CreateToggle({
 		print(state)
 		if state then
 			print("Toggle On")
-		_G.Equip = true
-		while _G.Equip do
-			wait()
-			for i,v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
-				if v.Name == "Double Weight" then
-					v.Parent = game.Players.LocalPlayer.Character
+			_G.Equip = true
+			while _G.Equip do
+				wait()
+				for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+					if v.Name == "Double Weight" then
+						v.Parent = game.Players.LocalPlayer.Character
+					end
 				end
 			end
-		end
 		else
 			print("Toggle Off")
-		_G.Equip = false
-	end
+			_G.Equip = false
+		end
 	end,
 })
+
+-- FARM TOGGLE
 local Toggle = Tab:CreateToggle({
 	Name = "Farm Weight",
 	CurrentValue = false,
-	Flag = "Farm Dw1", 
+	Flag = "Farm Dw1",
 	Callback = function(state)
 		print(state)
 		if state then
 			print("Toggle On")
-		_G.Farm = true
-		while _G.Farm do
-			wait(0.5)
-			for i,v in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
-				if v.Name == "Double Weight" then v:Activate() end
+			_G.Farm = true
+			while _G.Farm do
+				wait(CWT) -- default to 0.5s if CWT is 0
+				for i, v in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
+					if v.Name == "Double Weight" then
+						v:Activate()
+					end
+				end
 			end
-		end
 		else
 			print("Toggle Off")
-		_G.Farm = false
-	end
+			_G.Farm = false
+		end
 	end,
 })
---local Button
 local Toggle = Tab:CreateToggle({
 	Name = "Lock Player",
 	CurrentValue = false,
@@ -92,6 +126,13 @@ local Toggle = Tab:CreateToggle({
 				end
 			end
 	end,
+})
+local Button = Tab:CreateButton({
+  Name = "Zoom Out (1000)",
+  CurrentValue = false,
+  Callback = function()
+    game.Players.LocalPlayer.CameraMaxZoomDistance = 1000
+  end,
 })
 local Section = Tab:CreateSection("Extra")
 local Button = Tab:CreateButton({
@@ -120,7 +161,20 @@ local Button = Tab:CreateButton({
 local Button = Tab:CreateButton({
 	Name = "Tp To Safe Zone",
 	Callback = function()
-	    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1938, 146, -5296)
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- Create invisible platform 15,000 studs above the character
+local platform = Instance.new("Part")
+platform.Size = Vector3.new(1000, 1, 100)
+platform.Anchored = true
+platform.Transparency = 1 -- make invisible
+platform.CanCollide = true -- still solid so the player doesn't fall through
+platform.Position = hrp.Position + Vector3.new(0, 15000, 0)
+platform.Name = "DontDeleteMe"
+platform.Parent = workspace
+
+-- Teleport the character above the platform (e.g., 5 studs up)
+hrp.CFrame = platform.CFrame + Vector3.new(0, 5, 0)
 	end,
 })
 local Button = Tab:CreateButton({
@@ -132,6 +186,12 @@ local Button = Tab:CreateButton({
 local Button = Tab:CreateButton({
 	Name = "Low Ping",
 	Callback = function()
+	for _, obj in pairs(workspace:GetChildren()) do
+            if obj ~= character and obj.Name ~= "DontDeleteMe" and obj ~= workspace.CurrentCamera then
+                obj:Destroy()
+            end
+        end
+			
         local decalsyeeted = true
         local g = game
         local w = g.Workspace
@@ -226,30 +286,35 @@ task.spawn(function()
 		end)
 	until Strength.Value == 999999999999999999999999999999
 end)
-local Label = Tab:CreateLabel("COMING SOON!!")
---[[
+local Label9 = Tab:CreateLabel("Size: 0")
+task.spawn(function()
+  repeat
+    task.wait(1)
+    str:GetPropertyChangedSignal("Value"):Connect(function()
+        Label9:Set("Size: ".. str.Value)
+    end)
+  until str.Value == 99999999999999999999999999999999999
+end)
+local Label = Tab:CreateLabel("Gained: 0")
 task.spawn(function()
 	repeat
-		task.wait(1)
 	local curvalue = str.Value;
 	local earned = 0.00;
 	str:GetPropertyChangedSignal("Value"):Connect(function()
 		local delta = (str.Value - curvalue);
 		earned += delta;
-		script.Parent.Text = "Earned: "..earned;
+		task.wait(1)
+	  Label:Set("Gained: " .. earned);
 		curvalue = str.Value;
 	end)
-
-	Label:Set("Gained: " .. earned)
 	until earned == 999999999999999999999999999999999999999999
 end)
-]]--
+
 
 local Label1 = Tab:CreateLabel("Weight: 0")
 
 task.spawn(function()
-    repeat
-        task.wait(1)
+	repeat
         local num = 0
         local backpackItems = LocalPlayer.Backpack:GetChildren()
         for i, v in backpackItems do
@@ -266,7 +331,7 @@ task.spawn(function()
                 end
             end
         end
-
+task.wait(1)
         Label1:Set("Weight: " .. num)
     until num == 9999999999999
 end)
@@ -275,44 +340,11 @@ local Section = Tab:CreateSection("Misc")
 local Button = Tab:CreateButton({
 	Name = "Day/Night",
 	Callback = function()
-	    if game:GetService("Lighting").ClockTime == 19 then
+	    if game:GetService("Lighting").ClockTime == 0 then
             game:GetService("Lighting").ClockTime = 14
         elseif game:GetService("Lighting").ClockTime == 14 then
-            game:GetService("Lighting").ClockTime = 19
+            game:GetService("Lighting").ClockTime = 0
         end
-	end,
-})
-local Button = Tab:CreateButton({
-	Name = "Anti Hit (Credits @KIXEmperorKaidoIX)",
-	Callback = function()
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/MidnightScriptz/KaidoAntiH/main/loader", true))()
-	end,
-})
-local Button = Tab:CreateButton({
-	Name = "Strength Spy (Credits @KIXEmperorKaidoIX)",
-	Callback = function()
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/MidnightScriptz/KaidoSpy/main/loader", true))()
-	end,
-})
-local Button = Tab:CreateButton({
-	Name = "Rainbow Gloves",
-	Callback = function()
-		while true do
-			local ohString1 = "Pink"
-		  
-			game:GetService("ReplicatedStorage").Remotes.SellWep:FireServer(ohString1)
-			task.wait(.2)
-			local ohString1 = "Green"
-		  
-			game:GetService("ReplicatedStorage").Remotes.SellWep:FireServer(ohString1)
-			task.wait(.2)
-		  
-			local ohString1 = "Blue"
-		  
-			game:GetService("ReplicatedStorage").Remotes.SellWep:FireServer(ohString1)
-			task.wait(.2)
-		  
-		   end
 	end,
 })
 local Tab = Window:CreateTab("Credits")
