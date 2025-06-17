@@ -1,7 +1,7 @@
 local player = game:GetService("Players").LocalPlayer
 local PlrName = player.Name
 local str = game:GetService("Players").LocalPlayer.leaderstats.Strength
-local Strength = game:GetService("ReplicatedStorage").Data.[PlrName]Strength
+local Strength = game:GetService("ReplicatedStorage").Data[PlrName].Strength
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
